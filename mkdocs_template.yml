@@ -1,0 +1,42 @@
+site_name: IVdocs
+docs_dir: docs
+theme:
+  name: readthedocs
+  custom_dir: docs/readthedocs-customization
+  highlightjs: true
+#  hljs_languages:
+#    - cmake
+  collapse_navigation: false
+  locale: en
+  prev_next_buttons_location: none
+plugins:
+  - include-markdown:
+      comments: false
+      trailing_newlines: false
+nav:
+  - index.md
+extra_javascript:
+  - extra-highlights.js
+markdown_extensions:
+  - tables
+  - markdown_include.include:
+      base_path: .
+#    - admonition
+#    - codehilite:
+#        use_pygments: true
+#    - toc:
+#        permalink: true
+#        separator: "_"
+#    - sane_lists
+#    - smarty
+  - pymdownx.highlight:
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - attr_list
+#  - pymdownx.snippets
+#  - pymdownx.superfences
+#  - pymdownx.critic
+#  - pymdownx.caret
+#  - pymdownx.keys
+#  - pymdownx.mark
+#  - pymdownx.tilde

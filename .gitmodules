@@ -1,0 +1,6 @@
+[submodule "libs/IVSigma"]
+	path = libs/IVSigma
+	url = https://github.com/SGSSGene/IVSigma.git
+[submodule "libs/IVio"]
+	path = libs/IVio
+	url = https://github.com/SGSSGene/IVio.git
