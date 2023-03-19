@@ -57,6 +57,18 @@
     <ul class="current">
                 <li class="toctree-l2 current"><a class="reference internal current" href="./">Formats</a>
     <ul class="current">
+    <li class="toctree-l3"><a class="reference internal" href="#fasta">FASTA</a>
+        <ul>
+    <li class="toctree-l4"><a class="reference internal" href="#record-and-record-view">Record and Record-View</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#reading">Reading</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#writing">Writing</a>
+    </li>
+    <li class="toctree-l4"><a class="reference internal" href="#examples">Examples</a>
+    </li>
+        </ul>
+    </li>
     <li class="toctree-l3"><a class="reference internal" href="#vcf">VCF</a>
         <ul>
     <li class="toctree-l4"><a class="reference internal" href="#example">Example</a>
@@ -145,6 +157,99 @@
             <div class="section" itemprop="articleBody">
               
                 <h1 id="formats">Formats</h1>
+<h2 id="fasta">FASTA</h2>
+<p>Support reading and writing <a href="https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&amp;PAGE_TYPE=BlastDocs&amp;DOC_TYPE=BlastHelp">fasta files</a>.</p>
+<h3 id="record-and-record-view">Record and Record-View</h3>
+<p>IVio provides the data structs <code>ivio::fasta::record</code> and <code>ivio::fasta::record_view</code>.
+A <code>record_view</code> has following layout:</p>
+<pre><code class="language-c++">struct record_view {
+    std::string_view id;
+    std::string_view seq;
+};
+</code></pre>
+<p>The type <code>record</code> looks like this:</p>
+<pre><code class="language-c++">struct record {
+    std::string id;
+    std::string seq;
+};
+</code></pre>
+<h3 id="reading">Reading</h3>
+<p>The <code>ivio::fasta::reader</code> is for-range compatible class. It fulfils c++ concepts of  <a href="https://en.cppreference.com/w/cpp/ranges/range">range</a> and <a href="https://en.cppreference.com/w/cpp/named_req/InputIterator">LegacyInputIterator</a>.
+When looping over a reader it returns <code>record_view</code> that are only valid until next element are being requested from the reader.
+To get persistent data, it is required to create a <code>record</code>.</p>
+<p>As an input it takes an <code>ivio::fasta::reader::config</code> struct which declares the input file and if gzip compression is wanted.</p>
+<pre><code class="language-c++">struct ivio::fasta::reader::config {
+    // Source: file or stream
+    std::variant&lt;std::filesystem::path, std::reference_wrapper&lt;std::istream&gt;&gt; input;
+
+    // This is only relevant if a stream is being used
+    bool compressed{};
+};
+</code></pre>
+<h3 id="writing">Writing</h3>
+<p>The <code>ivio::fasta::writer</code> provides a single function <code>write</code> which takes a <code>ivio::fasta::record_view</code> as input.
+The class is initialized with a <code>ivio::fasta::writer::config</code> object which has the options:</p>
+<pre><code>struct ivio::fasta::writer::config {
+    // Source: file or stream
+    std::variant&lt;std::filesystem::path, std::reference_wrapper&lt;std::ostream&gt;&gt; output;
+
+    // This is only relevant if a stream is being used
+    bool compressed{};
+
+    size_t length{80}; // Break after 80 characters
+};
+</code></pre>
+<h3 id="examples">Examples</h3>
+<p><strong>Example 1</strong>
+In this example a file is being opened and print to command line</p>
+<pre><code class="language-c++">#include &lt;iostream&gt;
+#include &lt;ivio/ivio.h&gt;
+
+int main(int argc, char** argv) {
+    auto inputFile = std::filesystem::path{argv[1]};
+    auto reader = ivio::fasta::reader{{.input = inputFile,
+                                       .compressed = false, // false by default, if true a gzip file is expected
+    }};
+    for (auto record_view : reader) {
+        std::cout &lt;&lt; &quot;id: &quot; &lt;&lt; record_view.id &lt;&lt; &quot;\n&quot;;
+        std::cout &lt;&lt; &quot;seq: &quot; &lt;&lt; record_view.seq &lt;&lt; &quot;\n&quot;;
+    }
+}
+</code></pre>
+<p><strong>Output</strong></p>
+<pre><code class="language-sh">id: Seq1
+seq: ACGT
+id: Seq2
+seq: NNNN
+</code></pre>
+<p><strong>Example 2</strong>
+In this example the data is read from the standard input and writen to standard output</p>
+<pre><code class="language-c++">#include &lt;iostream&gt;
+#include &lt;ivio/ivio.h&gt;
+
+int main(int, char**) {
+    auto reader = ivio::fasta::reader{{.input = std::cin}};
+    auto writer = ivio::fasta::writer{{.input = std::cout}};
+
+    for (auto record_view : reader) {
+        writer.write(record_view);
+    }
+}
+</code></pre>
+<p><strong>Example 3</strong>
+Load complete fasta file into memory:</p>
+<pre><code class="language-c++">#include &lt;iostream&gt;
+#include &lt;ivio/ivio.h&gt;
+
+int main(int, char**) {
+    auto reader = ivio::fasta::reader{{.input = std::cin,
+                                       .compressed = false, // false by default, if true a gzip file is expected
+    }};
+
+    // creates a vector of type `std::vector&lt;ivio::fasta::record&gt;` even though reader returns `record_view`
+    auto vec = std::vector{begin(reader), end(reader)};
+}
+</code></pre>
 <h2 id="vcf">VCF</h2>
 <p>VCF provides 5 classes:</p>
 <ul>
